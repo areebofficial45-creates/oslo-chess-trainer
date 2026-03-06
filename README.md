@@ -113,7 +113,7 @@ The bot validates moves, updates the board, and continues the puzzle until the t
 ### Help and guides
 
 ```
-!help
+!guide
 !notation
 !creator
 ```
@@ -156,4 +156,4 @@ Creator of **Oslo — Discord Chess Trainer**
 
 # 📜 License
 
-This project is licensed under the **MIT License**.
+This project is licensed under the **MIT License**.New-Item LICENSE
