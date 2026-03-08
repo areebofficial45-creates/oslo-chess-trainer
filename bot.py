@@ -253,30 +253,6 @@ async def creator(ctx):
         "Created with ♟️ and ☕ by **Night Wing** for passionate chess players."
     )    
 
-@bot.command()
-async def restore_stats(ctx):
- 
-    if ctx.author.id != 1480173085746266194:
-        return
-
-    # recovering leaderboard wiped by redeploy.
-    recovery_data = {
-        "1337479708379447329": {"solved": 118, "best": 1880},
-        "1280379034236358677": {"solved": 64, "best": 2785},
-        "1362813708031492366": {"solved": 32, "best": 2000},
-        "1399808824382324807": {"solved": 11, "best": 1540},
-        "1382637263015510087": {"solved": 8, "best": 2450},
-        "1391978648839655424": {"solved": 8, "best": 1500},
-        "1479069588493828167": {"solved": 8, "best": 920},
-        "1376617166899773541": {"solved": 5, "best": 886},
-        "746028509297901600": {"solved": 4, "best": 900},
-        "1058446682519511151": {"solved": 4, "best": 785}
-    }
-    
-    from puzzles import save_stats
-    save_stats(recovery_data)
-    await ctx.send("✅ Leaderboard data successfully injected into the Railway Volume!")
-
 
 
 
