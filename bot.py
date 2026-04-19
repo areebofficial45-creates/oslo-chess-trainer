@@ -192,6 +192,7 @@ async def guide(ctx):
         name="📊 Stats",
         value=(
             "`!profile` – view your stats\n"
+            "`!stats` – view all players' stats\n"
             "`!leaderboard` – see top solvers"
         ),
         inline=False
@@ -243,6 +244,53 @@ async def notation(ctx):
 
     embed.set_footer(text="Always start puzzle moves with '-'")
 
+    await ctx.send(embed=embed)
+
+@bot.command()
+async def stats(ctx):
+
+    stats_path = "/data/stats.json" if os.path.exists("/data") else "stats.json"
+
+    if not os.path.exists(stats_path):
+        await ctx.send("📭 No stats file found yet. Solve some puzzles first!")
+        return
+
+    try:
+        with open(stats_path, "r") as f:
+            data = json.load(f)
+    except json.JSONDecodeError:
+        await ctx.send("⚠️ Stats file exists but could not be parsed. It may be corrupted.")
+        return
+    except Exception as e:
+        await ctx.send(f"⚠️ Could not read stats file: {e}")
+        return
+
+    if not data:
+        await ctx.send("📭 Stats file is empty. Solve some puzzles first!")
+        return
+
+    embed = discord.Embed(
+        title="📊 Puzzle Stats",
+        description=f"All-time stats from `{stats_path}`",
+        color=0x2ecc71
+    )
+
+    for uid, entry in data.items():
+        try:
+            user = await bot.fetch_user(int(uid))
+            username = user.name
+        except Exception:
+            username = f"User {uid}"
+
+        solved = entry.get("solved", 0)
+        best = entry.get("best", 0)
+        embed.add_field(
+            name=username,
+            value=f"✅ Solved: **{solved}** | 🧩 Best rating: **{best}**",
+            inline=False
+        )
+
+    embed.set_footer(text="Use !profile to see your own stats · !leaderboard for rankings")
     await ctx.send(embed=embed)
 
 @bot.command()
