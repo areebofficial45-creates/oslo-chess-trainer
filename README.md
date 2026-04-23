@@ -3,6 +3,8 @@
 
 Oslo is a Discord bot that transforms any server into an interactive chess puzzle training environment. Players launch puzzles, solve tactics through chat, and compete on leaderboards — all without leaving Discord.
 
+Visit Oslo's own webpage! :🐻[Oslo Web](https://oslo-web-production.up.railway.app)
+
 ---
 
 # 🆕 What's New in v2.0
@@ -23,6 +25,7 @@ v2.0 is a full architectural rebuild based on what real users actually needed:
 | **Admin tools** | None | Sleep/wake, legacy import, data export |
 | **Puzzle UI** | Text only | Interactive buttons (Hint, Resign, Moves) |
 | **RAM (puzzles)** | ~80MB cached JSON | ~0MB — DB queries on demand |
+| **Master difficulty** |On user demand a higher difficulty lvl | Rating: 2400elo+! |
 
 ---
 
@@ -32,7 +35,7 @@ v2.0 is a full architectural rebuild based on what real users actually needed:
 🧠 Solve tactics through interactive back-and-forth gameplay  
 🖼️ Board renders after every move with last move highlighted  
 🎯 Filter by theme — sacrifice, endgame, fork, pin, and more  
-📊 Difficulty tiers calibrated to real Lichess puzzle ratings  
+📊 Difficulty tiers calibrated to real Lichess puzzle rating  
 📚 200,000 puzzles across 4 difficulty levels  
 🏆 Difficulty-weighted scoring with streaks and clean solve bonuses  
 📈 Separate server and global leaderboards with toggle buttons  
@@ -46,10 +49,11 @@ v2.0 is a full architectural rebuild based on what real users actually needed:
 
 | Difficulty | Rating Range | Base Score |
 |------------|--------------|------------|
-| Easy       | 0 – 1499     | 10 pts     |
-| Medium     | 1500 – 1799  | 20 pts     |
-| Hard       | 1800 – 2099  | 30 pts     |
-| Insane     | 2100+        | 50–60 pts  |
+| Easy       | 400 – 999    | 10 pts     |
+| Medium     | 1000 – 1499  | 20 pts     |
+| Hard       | 1500 – 1999  | 30 pts     |
+| Insane     | 2000 - 2300  | 50 pts     |
+| Master     | 2400+        | 60-75 pts  |
 
 **Modifiers:**
 ```

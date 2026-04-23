@@ -1,5 +1,4 @@
 # Copyright (c) 2026 Night Wing. All Rights Reserved.
-
 import json
 import random
 import chess
@@ -131,18 +130,6 @@ async def _migrate_json_to_db():
                         WHERE user_id = $4
                     """, legacy_score, solved, best, user_id)
                     migrated += 1
-
-        # Backfill bot_stats with legacy totals
-        # Uses GREATEST so it never overwrites higher real values
-        total_solved = sum(d.get('solved', 0) for d in legacy.values())
-        async with _pool.acquire() as conn:
-            await conn.execute("""
-                UPDATE bot_stats
-                SET total_puzzles_solved = GREATEST(total_puzzles_solved, $1),
-                    total_interactions   = GREATEST(total_interactions,   $2)
-                WHERE id = 1
-            """, total_solved, total_solved * 3)
-        print(f"[Oslo] Bot stats backfilled: {total_solved} solved, {total_solved * 3} interactions")
 
         if source == STATS_FILE:
             try:
@@ -335,7 +322,8 @@ def calculate_score(rating: int, hint_used: bool,
     elif rating < 1500: base = 20
     elif rating < 2000: base = 30
     elif rating < 2400: base = 50
-    else:               base = 60
+    elif rating < 2600: base = 60
+    else:               base = 75
     if hint_used:
         base = int(base * 0.7)
     base -= wrong_moves * 3
@@ -476,7 +464,7 @@ SUPPORTED_THEMES = {
     "fork", "pin", "mate", "mateIn1", "mateIn2", "promotion",
 }
 
-LEVELS = ["easy", "medium", "hard", "insane"]
+LEVELS = ["easy", "medium", "hard", "insane", "master"]
 
 
 def _load_json_fallback(level: str) -> list:
@@ -510,63 +498,70 @@ async def get_random_puzzle(level: str, theme: str = None) -> dict:
     Tries PostgreSQL first — instant query from 50k pool.
     Falls back to JSON files if DB is unavailable.
 
-    level: easy / medium / hard / insane
+    level: easy / medium / hard / insane / hardcore
     theme: optional — e.g. 'sacrifice', 'endgame'
     """
-    # ── PostgreSQL primary ────────────────────────────────────────────────────
+    # hardcore maps to the insane DB pool filtered by rating >= 2400
+    db_level   = "insane" if level == "master" else level
+    rating_min = 2400     if level == "master" else 0
+
     if _pool is not None:
         try:
             async with _pool.acquire() as conn:
                 if theme:
-                    # Pick random from up to 200 matching rows — fast and varied
-                    row = await conn.fetchrow("""
-                        SELECT * FROM (
-                            SELECT * FROM puzzles
-                            WHERE level = $1
-                              AND themes LIKE $2
-                            LIMIT 200
-                        ) sub
-                        ORDER BY RANDOM()
-                        LIMIT 1
-                    """, level, f"%{theme}%")
-                    if row is None:
-                        # Theme not found at this level — fall back to any theme
+                    count = await conn.fetchval("""
+                        SELECT COUNT(*) FROM puzzles
+                        WHERE level = $1 AND themes LIKE $2 AND rating >= $3
+                    """, db_level, f"%{theme}%", rating_min)
+                    if count and count > 0:
+                        offset = random.randint(0, count - 1)
                         row = await conn.fetchrow("""
-                            SELECT * FROM (
-                                SELECT * FROM puzzles
-                                WHERE level = $1
-                                LIMIT 200
-                            ) sub
-                            ORDER BY RANDOM()
-                            LIMIT 1
-                        """, level)
-                else:
-                    # Pick random from first 200 rows in this level — very fast
-                    row = await conn.fetchrow("""
-                        SELECT * FROM (
                             SELECT * FROM puzzles
-                            WHERE level = $1
-                            LIMIT 200
-                        ) sub
-                        ORDER BY RANDOM()
-                        LIMIT 1
-                    """, level)
+                            WHERE level = $1 AND themes LIKE $2 AND rating >= $3
+                            LIMIT 1 OFFSET $4
+                        """, db_level, f"%{theme}%", rating_min, offset)
+                    else:
+                        row = None
+                    if row is None:
+                        # Theme not found — fall back to any theme
+                        count = await conn.fetchval(
+                            "SELECT COUNT(*) FROM puzzles WHERE level = $1 AND rating >= $2",
+                            db_level, rating_min
+                        )
+                        offset = random.randint(0, max(0, count - 1))
+                        row = await conn.fetchrow("""
+                            SELECT * FROM puzzles
+                            WHERE level = $1 AND rating >= $2
+                            LIMIT 1 OFFSET $3
+                        """, db_level, rating_min, offset)
+                else:
+                    count = await conn.fetchval(
+                        "SELECT COUNT(*) FROM puzzles WHERE level = $1 AND rating >= $2",
+                        db_level, rating_min
+                    )
+                    offset = random.randint(0, max(0, count - 1))
+                    row = await conn.fetchrow("""
+                        SELECT * FROM puzzles
+                        WHERE level = $1 AND rating >= $2
+                        LIMIT 1 OFFSET $3
+                    """, db_level, rating_min, offset)
 
                 if row is not None:
                     return _row_to_puzzle(row)
         except Exception as e:
             print(f"[Oslo] DB puzzle query failed, using JSON fallback: {e}")
 
-    # ── JSON fallback ─────────────────────────────────────────────────────────
-    pool = _load_json_fallback(level)
+    # JSON fallback — hardcore uses insane pool filtered by rating
+    fallback_level = "insane" if level == "master" else level
+    pool = _load_json_fallback(fallback_level)
+    if level == "master":
+        pool = [p for p in pool if p.get("rating", 0) >= 2400] or pool
     if theme:
         t        = theme.lower()
-        filtered = [p for p in pool
-                    if t in [x.lower() for x in p.get("themes", [])]]
+        filtered = [p for p in pool if t in [x.lower() for x in p.get("themes", [])]]
         if len(filtered) >= 5:
             return random.choice(filtered)
     return random.choice(pool)
-
 
 # ─────────────────────────────────────────────────────────────────────────────
 # DISPLAY NAME HELPER

@@ -1,5 +1,4 @@
 # Copyright (c) 2026 Night Wing. All Rights Reserved.
-
 import json
 import discord
 from discord.ext import commands
@@ -27,7 +26,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-LEVELS = ["easy", "medium", "hard", "insane"]
+LEVELS = ["easy", "medium", "hard", "insane", "master"]
 
 # { user_id: {"header": msg, "board": msg, "status": msg} }
 puzzle_messages: dict = {}
@@ -124,11 +123,12 @@ def build_status_embed(
 def score_display(rating: int, hint_used: bool,
                   wrong_moves: int = 0, clean: bool = False) -> int:
     """Mirror of calculate_score in puzzles.py — for chat display only."""
-    if   rating < 1500: base = 10
-    elif rating < 1800: base = 20
-    elif rating < 2100: base = 30
+    if   rating < 1000: base = 10
+    elif rating < 1500: base = 20
+    elif rating < 2000: base = 30
     elif rating < 2400: base = 50
-    else:               base = 60
+    elif rating < 2600: base = 60
+    else:               base = 75
     if hint_used:
         base = int(base * 0.7)
     base -= wrong_moves * 3
@@ -467,7 +467,7 @@ async def puzzle(ctx, arg1: str = "medium", arg2: str = None):
         else:
             await ctx.send(
                 "Invalid argument: `" + arg + "`\n"
-                "Levels: `easy` `medium` `hard` `insane`\n"
+                "Levels: `easy` `medium` `hard` `insane` `master`\n"
                 "Themes: `sacrifice` `endgame` `middlegame` `opening` "
                 "`fork` `pin` `mate` `mateIn1` `mateIn2` `promotion`"
             )
@@ -497,11 +497,15 @@ async def puzzle(ctx, arg1: str = "medium", arg2: str = None):
 
     level = level.lower()
     if level not in LEVELS:
-        await ctx.send("Choose a difficulty: `easy` | `medium` | `hard` | `insane`")
+        await ctx.send("Choose a difficulty: `easy` | `medium` | `hard` | `insane` | `master`")
         return
 
     try:
         puzz    = await get_random_puzzle(level, theme=theme)
+        # If user requested a theme and it's in this puzzle, show it
+        # instead of the priority-picked display_theme
+        if theme and theme.lower() in [t.lower() for t in puzz.get('themes', [])]:
+            puzz['display_theme'] = theme
         blunder = start_puzzle(user_id, puzz)
     except Exception as e:
         print(f"[Oslo] puzzle start error: {e}")
@@ -889,7 +893,7 @@ async def creator(ctx):
     await ctx.send(
         "\U0001f338 I am **Oslo**, your cozy Discord chess trainer.\n"
         "Created with \u265f\ufe0f and \u2615 by **Night Wing** for passionate chess players.\n"
-        "\u2615 Support the project: https://ko-fi.com/nightwing"
+        "\U0001f43b Visit Oslo: https://oslo-web-production.up.railway.app"
     )
 
 
@@ -1019,6 +1023,31 @@ async def importlegacystats(ctx):
     except Exception as e:
         await ctx.send(f"❌ Failed: {e}")
 
+
+
+@bot.command()
+@admin_only()
+async def leaveserver(ctx, server_id: str = None):
+    """Leave a specific server by ID. Run !leaveserver alone to list all servers."""
+    if not server_id:
+        lines = [
+            f"`{g.id}` — {g.name} ({g.member_count} members)"
+            for g in bot.guilds
+        ]
+        await ctx.send("**Oslo is in these servers:**\n" + "\n".join(lines))
+        return
+    try:
+        guild = bot.get_guild(int(server_id))
+        if guild is None:
+            await ctx.send(f"❌ Server `{server_id}` not found.")
+            return
+        name = guild.name
+        await guild.leave()
+        await ctx.send(f"✅ Oslo has left **{name}** (`{server_id}`).")
+    except ValueError:
+        await ctx.send("❌ Invalid server ID — must be a number.")
+    except Exception as e:
+        await ctx.send(f"❌ Failed: {e}")
 
 if not TOKEN:
     print('[Oslo] ERROR: DISCORD_TOKEN is not set!')
