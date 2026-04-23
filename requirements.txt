@@ -1,0 +1,7 @@
+discord.py==2.7.1
+python-chess==1.999
+cairosvg==2.8.2
+pillow==12.1.1
+requests==2.32.5
+zstandard==0.25.0
+asyncpg==0.29.0

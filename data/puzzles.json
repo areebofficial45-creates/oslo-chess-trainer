@@ -1,0 +1,37 @@
+[
+  {
+    "id": 1,
+    "fen": "6k1/5ppp/8/8/8/8/6PP/5QK1 w - - 0 1",
+    "moves": ["Qa8+", "Kh7", "Qh8#"],
+    "theme": "Mate in 2",
+    "difficulty": 1000
+  },
+  {
+    "id": 2,
+    "fen": "6k1/5ppp/8/8/8/8/6PP/5RK1 w - - 0 1",
+    "moves": ["Re8+", "Kh7", "Rh8#"],
+    "theme": "Mate in 2",
+    "difficulty": 1100
+  },
+  {
+    "id": 3,
+    "fen": "7k/6pp/8/8/8/8/6PP/6RK w - - 0 1",
+    "moves": ["Rg8+", "Kxg8", "h3"],
+    "theme": "Tactic",
+    "difficulty": 1200
+  },
+  {
+    "id": 4,
+    "fen": "6k1/5ppp/8/8/8/8/6PP/6RK w - - 0 1",
+    "moves": ["Rg8+", "Kxg8", "h4"],
+    "theme": "Tactic",
+    "difficulty": 1300
+  },
+  {
+    "id": 5,
+    "fen": "6k1/5ppp/8/8/8/8/6PP/5QK1 w - - 0 1",
+    "moves": ["Qe8+", "Kh7", "Qh5#"],
+    "theme": "Mate in 2",
+    "difficulty": 1200
+  }
+]
