@@ -16,7 +16,7 @@ from puzzles import (
     get_bot_stats, record_interaction, record_guild,
     import_legacy_to_guild, export_all_data, get_puzzle_source, format_display_name,
     get_locked_channel, set_locked_channel,
-    SUPPORTED_THEMES
+    SUPPORTED_THEMES, THEME_ALIASES
 )
 
 # ── Token ─────────────────────────────────────────────────────────────────────
@@ -455,9 +455,11 @@ async def is_allowed_channel(ctx) -> bool:
 
 
 @bot.command()
-@commands.has_permissions(manage_channels=True)
 async def lockbotchannel(ctx):
     """Lock Oslo to the current channel only. Requires Manage Channels permission."""
+    if not is_admin(ctx.author.id) and not ctx.author.guild_permissions.manage_channels:
+        await ctx.send("❌ You need Manage Channels permission to use this command.")
+        return
     if not ctx.guild:
         await ctx.send("❌ This command can only be used in a server.")
         return
@@ -470,9 +472,11 @@ async def lockbotchannel(ctx):
 
 
 @bot.command()
-@commands.has_permissions(manage_channels=True)
 async def unlockbotchannel(ctx):
     """Unlock Oslo so it works in all channels."""
+    if not is_admin(ctx.author.id) and not ctx.author.guild_permissions.manage_channels:
+        await ctx.send("❌ You need Manage Channels permission to use this command.")
+        return
     if not ctx.guild:
         await ctx.send("❌ This command can only be used in a server.")
         return
@@ -517,13 +521,14 @@ async def puzzle(ctx, arg1: str = "medium", arg2: str = None):
         if arg.lower() in LEVELS:
             level = arg.lower()
         elif arg.lower() in {t.lower() for t in SUPPORTED_THEMES}:
-            theme = arg
+            # Use canonical casing from SUPPORTED_THEMES
+            theme = next(t for t in SUPPORTED_THEMES if t.lower() == arg.lower())
         else:
             await ctx.send(
                 "Invalid argument: `" + arg + "`\n"
                 "Levels: `easy` `medium` `hard` `insane` `master`\n"
                 "Themes: `sacrifice` `endgame` `middlegame` `opening` "
-                "`fork` `pin` `mate` `mateIn1` `mateIn2` `mateIn4` `mateIn5` `promotion`"
+                "`fork` `pin` `mate` `mateIn1` `mateIn2` `mateIn4` `longMate` `promotion`"
             )
             return
 
@@ -891,7 +896,7 @@ async def guide(ctx):
             "sacrifice   endgame    middlegame\n"
             "opening     fork       pin\n"
             "mate        mateIn1    mateIn2\n"
-            "mateIn4     mateIn5    promotion\n"
+            "mateIn4     longMate   promotion\n"
             "```"
         ),
         inline=False
