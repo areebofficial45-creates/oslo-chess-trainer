@@ -459,6 +459,7 @@ async def on_message(message: discord.Message):
                     await status_msg.edit(embed=build_status_embed(result), view=view)
                 await message.reply(result, mention_author=False)
 
+    await handle_egg_hunt(message)
     await bot.process_commands(message)
 
 
