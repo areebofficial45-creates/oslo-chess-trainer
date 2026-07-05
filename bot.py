@@ -614,6 +614,24 @@ async def puzzle(ctx, arg1: str = "medium", arg2: str = None):
     )
     puzzle_messages[user_id] = msgs
 
+async def handle_egg_hunt(message):
+    content = message.content.strip().lower()
+    squished = ''.join(content.split())  # removes all spaces, case insensitive
+ 
+    # Anniversary hint — triggers on "anniversary" anywhere in message
+    if 'annisonsary' in content:
+        await message.channel.send(
+            "🥚 check the meow billi channel for the egg hunt :P"
+        )
+        return
+ 
+    # Winner detection — case insensitive, space insensitive
+    if squished == 'dubistgutgenug':
+        await message.channel.send(
+            f"omg yaayaa {message.author.mention} u won! or did you? 🌸\n"
+            f"send this password to a mod to see if you were first!"
+        )
+
 
 @bot.command()
 @commands.cooldown(1, 5, commands.BucketType.user)
